@@ -1515,6 +1515,14 @@ ClientSocketContext::getNextRangeOffset() const
         }
 
     } else if (reply && reply->content_range) {
+     
+      //to support post method upload range(no define in rfc)
+     	if (http->request && (http->request->method == METHOD_POST || http->request->method == METHOD_PUT))
+      {
+  	        debugs(33, 3, "getNextRangeOffset upload file, bypass content_range offset " << reply->content_range->spec.offset);
+  	        return http->out.offset;
+  	   }
+     
         /* request does not have ranges, but reply does */
         /** \todo FIXME: should use range_iter_pos on reply, as soon as reply->content_range
          *        becomes HttpHdrRange rather than HttpHdrRangeSpec.
