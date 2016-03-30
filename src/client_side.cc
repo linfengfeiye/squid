@@ -1516,13 +1516,18 @@ ClientSocketContext::getNextRangeOffset() const
 
     } else if (reply && reply->content_range) {
            
-         	// post upload range for suport Fetion ofline file (no define in rfc2616)
-         	if (http->request && (http->request->method == METHOD_POST || http->request->method == METHOD_PUT))
-         	{
-         	    debugs(33, 3, "getNextRangeOffset upload file, bypass content_range offset " << reply->content_range->spec.offset);
-         	    return http->out.offset;
-         	}     
-     
+        // post upload range for support Fetion offline file (no define in rfc2616)
+        if (http->request && (http->request->method == METHOD_POST || http->request->method == METHOD_PUT))
+        {
+            int cont_len = reply->bodySize(http->request->method);
+            debugs(33, 3, "POST getNextRangeOffset, host:" << http->request->GetHost() << ", url:" << http->request->urlpath);
+            debugs(33, 3, "POST getNextRangeOffset, content_range:" << reply->content_range->spec.offset << ", range length:" << reply->content_range->spec.length << ", content_len:" << cont_len);
+            if(reply->content_range->spec.offset > 0 && reply->content_range->spec.length != cont_len)
+            {
+                debugs(33, 3, "getNextRangeOffset upload file");
+                return http->out.offset;
+            }
+        }   
         /* request does not have ranges, but reply does */
         /** \todo FIXME: should use range_iter_pos on reply, as soon as reply->content_range
          *        becomes HttpHdrRange rather than HttpHdrRangeSpec.
